@@ -83,6 +83,7 @@ def make_model(in_vocab, out_vocab, in_timesteps, out_timesteps, n):
 print("la_vocab_size:", la_vocab_size, la_length)
 print("en_vocab_size:", en_vocab_size, en_length)
 
+time.sleep(10)
 # model = make_model(la_vocab_size, en_vocab_size, la_length, en_length, 512)
 
 # num_epochs = 40

@@ -16,6 +16,8 @@ from keras import optimizers
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
+
+
 pd.set_option('display.max_colwidth', 200)
 
 # Read raw text file
