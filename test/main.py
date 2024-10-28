@@ -16,47 +16,42 @@ from keras import layers
 from keras import ops
 
 
-# print(tf.__version__)
+text_file = keras.utils.get_file(
+    fname="spa-eng.zip",
+    origin="http://storage.googleapis.com/download.tensorflow.org/data/spa-eng.zip",
+    extract=True,
+)
+text_file = pathlib.Path(text_file).parent / "spa-eng" / "spa.txt"
 
-# text_file = keras.utils.get_file(
-#     fname="spa-eng.zip",
-#     origin="http://storage.googleapis.com/download.tensorflow.org/data/spa-eng.zip",
-#     extract=True,
-# )
-# text_file = pathlib.Path(text_file).parent / "spa-eng" / "spa.txt"
+print(text_file)
+time.sleep(10)
 
-# with open(text_file, encoding='utf-8') as f:
-#     lines = f.read().split("\n")[:-1]
+with open(text_file, encoding='utf-8') as f:
+    lines = f.read().split("\n")[:-1]
+text_pairs = []
 
-def downdload_data(fname):
-    train_set = pd.read_parquet(fname) #TODO: change that!!!
-    train_set = train_set.drop(['id', 'file'], axis=1)
-
-    train_set['la'] = [s.translate(str.maketrans('', '', string.punctuation)) for s in train_set['la']] 
-    train_set['en'] = [s.translate(str.maketrans('', '', string.punctuation)) for s in train_set['en']] 
-
-    text_pairs = []
-
-    for line in train_set.to_numpy():
-        eng = line[0].lower()
-        spa = "[start] " + line[1].lower() + " [end]"
-        text_pairs.append((eng, spa))
-    return text_pairs
+for line in lines:
+    eng, spa = line.split("\t")
+    spa = "[start] " + spa + " [end]"
+    text_pairs.append((eng, spa))
 
 
-train_pairs = downdload_data("train.parquet")
-val_pairs = downdload_data("valid.parquet")
-test_pairs = downdload_data("test.parquet")
+for _ in range(5):
+    print(random.choice(text_pairs))
 
-random.shuffle(train_pairs)
-random.shuffle(val_pairs)
-random.shuffle(test_pairs)
+random.shuffle(text_pairs)
+num_val_samples = int(0.15 * len(text_pairs))
+num_train_samples = len(text_pairs) - 2 * num_val_samples
+train_pairs = text_pairs[:num_train_samples]
+val_pairs = text_pairs[num_train_samples : num_train_samples + num_val_samples]
+test_pairs = text_pairs[num_train_samples + num_val_samples :]
 
+print(f"{len(text_pairs)} total pairs")
 print(f"{len(train_pairs)} training pairs")
 print(f"{len(val_pairs)} validation pairs")
 print(f"{len(test_pairs)} test pairs")
 
-print(train_pairs[:2])
+
 
 # 99343 total pairs
 # 69541 training pairs
@@ -305,14 +300,14 @@ transformer = keras.Model(
     [encoder_inputs, decoder_inputs], decoder_outputs, name="transformer"
 )
 
-epochs = 30  # This should be at least 30 for convergence
+epochs = 45  # This should be at least 30 for convergence
 
 transformer.summary()
 transformer.compile(
     "rmsprop", loss="sparse_categorical_crossentropy", metrics=["accuracy"]
 )
 transformer.fit(train_ds, epochs=epochs, validation_data=val_ds)
-transformer.save('la-en-model.h5')
+transformer.save('model_new_v2.h5')
 
 spa_vocab = spa_vectorization.get_vocabulary()
 spa_index_lookup = dict(zip(range(len(spa_vocab)), spa_vocab))
@@ -345,3 +340,4 @@ for _ in range(30):
 
     print(input_sentence)
     print(translated)
+    print()
